@@ -3763,8 +3763,22 @@ public final class LimboManager implements Listener {
         clearState(player, true);
     }
 
+    /**
+     * SMPRevive keeps sending a player with this flag set to Limbo on every join. Once they
+     * are out of Limbo (released, revived, rejected) the newcomer admission is over.
+     */
+    private void clearNewcomerFlag(Player player) {
+        NamespacedKey newbieKey = new NamespacedKey("smprevive", "newbie_waiting");
+        PersistentDataContainer data = player.getPersistentDataContainer();
+        Byte flag = data.get(newbieKey, PersistentDataType.BYTE);
+        if (flag != null && flag == (byte) 1 && !isLimboWorld(player.getWorld())) {
+            data.set(newbieKey, PersistentDataType.BYTE, (byte) 0);
+        }
+    }
+
     private void clearState(Player player, boolean restoreGameMode) {
         boolean returning = isLimbo(player) && player.isOnline() && !isLimboWorld(player.getWorld());
+        clearNewcomerFlag(player);
         player.stopSound(PANGEA_AMBIENT_SOUND, SoundCategory.AMBIENT);
         UUID uuid = player.getUniqueId();
         BoundaryWrap boundaryWrap = boundaryWraps.remove(uuid);
