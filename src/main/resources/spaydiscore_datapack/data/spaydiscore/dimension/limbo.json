@@ -1,0 +1,22 @@
+{
+  "type": "spaydiscore:limbo",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "layers": [
+        {
+          "height": 64,
+          "block": "minecraft:air"
+        },
+        {
+          "height": 1,
+          "block": "minecraft:barrier"
+        }
+      ],
+      "biome": "minecraft:the_void",
+      "lakes": false,
+      "features": false,
+      "structure_overrides": []
+    }
+  }
+}

@@ -1,0 +1,41 @@
+# SpaydisCore sound configuration
+# Sound IDs may be vanilla or provided by a resource pack (like /playsound).
+# enabled: master switch for ALL plugin sounds
+# master-volume: multiplier applied to every volume (1.0 = as written)
+# Volume and master-volume are capped at 4.0; pitch is capped at 2.0.
+#
+# Structure per entry:
+#   path:
+#     sound:  "minecraft.sound.key"
+#     volume: 1.0
+#     pitch:  1.0
+# Shorthand also allowed: path: "minecraft.sound.key" (volume/pitch default to 1.0)
+
+enabled: true
+master-volume: 1.0
+
+# Custom cues included in the updated MacroNux resource pack.
+portals:
+  charge: {sound: "spaydiscore:portal_charge", volume: 0.8, pitch: 1.0}
+  open: {sound: "spaydiscore:portal_open", volume: 1.0, pitch: 1.0}
+
+allergy:
+  # Netherite allergy sneeze burst — real vanilla sneeze (thanks, pandas!)
+  # Verify ANY key first: /playsound <key> master @p
+  sneeze: {sound: "entity.panda.sneeze", volume: 1.2, pitch: 1.15}
+  # Jingle when allergy first develops (or is granted)
+  develop: {sound: "entity.villager.no", volume: 0.9, pitch: 0.8}
+
+tag:
+  # Broken nametag received into inventory
+  received: {sound: "entity.item.pickup", volume: 1.0, pitch: 0.8}
+
+limbo:
+  chain: {sound: "block.chain.step", volume: 0.2, pitch: 1.0}
+  rejection:
+    trident: {sound: "item.trident.riptide_1", volume: 0.7, pitch: 0.8}
+    lightning-impact: {sound: "entity.lightning_bolt.impact", volume: 0.6, pitch: 0.8}
+    lightning-thunder: {sound: "entity.lightning_bolt.thunder", volume: 0.5, pitch: 0.7}
+    wither: {sound: "entity.wither.ambient", volume: 0.4, pitch: 0.6}
+    basalt: {sound: "ambient.basalt_deltas.loop", volume: 0.22, pitch: 0.8}
+    cave: {sound: "ambient.cave", volume: 0.16, pitch: 0.7}

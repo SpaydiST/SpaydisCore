@@ -1,0 +1,22 @@
+# Build output and caches
+build/
+.gradle/
+.gradle-user-home/
+.tooling/
+out/
+
+# IDE and tool folders
+.idea/
+.opencode/
+.superpowers/
+*.iml
+
+# Local test server and generated artefacts
+run/
+outputs/
+.tmp-casino-contract/
+docs/superpowers/
+
+# OS
+Thumbs.db
+.DS_Store

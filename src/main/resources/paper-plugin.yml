@@ -1,0 +1,24 @@
+name: SpaydisCore
+version: '${version}'
+description: '${description}'
+authors: [ Spaydis ]
+main: macronux.spaydiscore.SpaydisCorePlugin
+api-version: '26.3'
+bootstrapper: macronux.spaydiscore.SpaydisCoreBootstrap
+dependencies:
+  server:
+    voicechat:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    SMPRevive:
+      load: BEFORE
+      required: false
+
+permissions:
+  spaydiscore.command.enchantfont:
+    description: Allows using /enchantfont command
+    default: true
+  spaydiscore.admin:
+    description: Allows using /spaydiscore admin commands
+    default: op

@@ -1,0 +1,278 @@
+# SpaydisCore Plugin Configuration
+# All values can be changed without recompiling - use /spaydiscore reload to apply
+
+# Feature toggles - set to false to completely disable a feature
+features:
+  # Jeb_ shulker color cycling (name tag "jeb_")
+  jeb-shulker: true
+
+  # Toni_Klark grayscale cycling (name tag "toni_klark") for shulkers and sheep
+  toni-klark: true
+
+  # Warden custom death messages
+  warden-death-messages: true
+
+  # Zombies with pickaxes below certain Y level
+  zombie-pickaxes: true
+
+  # Broken nametag drops when any named mob dies (to the owner if tamed)
+  broken-nametag: true
+
+  # Prevent breeding of mobs with specific name tag
+  prevent-breeding-named: true
+
+  # Make mobs named "Meneleet" aggressive to all entities
+  meneleet-aggression: true
+
+  # Pacifist: mobs named "Spaydis" never attack anyone (except bosses)
+  spaydis-pacifist: true
+
+  # Netherite allergy (auto-developed by wearing netherite too long)
+  netherite-allergy: true
+
+  # Send players to the Limbo dimension after death
+  limbo: true
+
+  # Undead curse (/sc undead give <player>): only rotten flesh is edible, poison and hunger
+  # are ignored, the sun burns them (a helmet prevents it but wears down), zombies ignore them
+  undead-curse: true
+
+  # Schizophrenia mode (/sc schizo give <player>): private random sounds, phantom mobs that
+  # walk toward the player and vanish, and blocks that briefly disappear. Only that player
+  # sees or hears any of it.
+  schizophrenia: true
+
+# Nether portal control. Change with /spaydiscore nether <off|opening|on>
+# off: portal blocks cannot be created and loaded portal blocks are removed
+# opening: new portals use the opening animation until an admin changes the mode
+# on: vanilla portal behavior
+nether-portals:
+  mode: enabled
+
+# End portal control. Change with /spaydiscore end <off|opening|on>
+# off: End portal blocks cannot be created and loaded portal blocks are removed
+# opening: new End portals use one of three particle animations
+# on: vanilla End portal behavior
+end-portals:
+  mode: enabled
+
+# Limbo dimension settings
+limbo:
+  # Fixed datapack dimension key. Use the bundled SpaydisCore datapack and restart the server.
+  # The legacy top-level world named "limbo" is not used or modified.
+  # key: spaydiscore:limbo
+
+  # World where an administrator releases a Limbo player
+  return-world: world
+
+  # Apply the strong Simple Voice Chat echo when voicechat is installed
+  voice-echo: true
+
+  # Players SMPRevive has no record of (never seen by it, even if they joined the server
+  # before) are treated like first-time joiners and sent to Limbo. Admins are skipped.
+  send-unknown-players: true
+  # Captured normal-world phrases are kept as Ogg Opus files in the plugin data folder
+  # under phrases/ and rotated after 30 files.
+  # Playback profile: normal or barrel. Underwater remains a legacy alias.
+  # It can also be changed with /sc limbo phrases <normal|barrel|status>.
+  phrase-mode: normal
+
+  # Move an isolated Limbo player close to another player after this delay
+  # to make long-distance coordinates unreliable.
+  alone-teleport:
+    enabled: true
+    after-seconds: 60
+    # Distance at which a player counts as isolated
+    radius: 32.0
+    # Random offset around the chosen player after relocation
+    offset-radius: 8.0
+
+  # Limbo wraps players to the opposite side after they cross the outer radius.
+  loop:
+    enabled: true
+    center-x: 0.0
+    center-z: 0.0
+    inner-radius: 50.0
+    outer-radius: 100.0
+
+  # Shared vanilla structure templates placed around the Limbo loop.
+  structures:
+    enabled: true
+    # Number selected from the four bundled templates on initial placement.
+    count: 3
+    # Empty Limbo time before the shared structures are moved.
+    idle-after-seconds: 300
+    # Minimum time between relocations after the idle delay.
+    interval-seconds: 300
+
+  # Invisible lights are placed above the barrier floor as chunks load.
+  # Existing lights in unloaded chunks remain persistent; reload only removes
+  # lights still tracked by this plugin in currently loaded chunks.
+  decorations:
+    enabled: true
+    # Default for players without a personal override: /sc limbo stars <on|off|status>
+    local-stars-enabled: true
+    # Local stars draw closer after standing still, and spread out while running.
+    reactive-stars: true
+    # Per-player density: /sc limbo stars <low|normal|high> [player].
+    # Applies to both local and global stars; local on/off remains independent.
+    light-blocks-per-chunk: 8
+    # Up to 64 smooth anchors x about 8 End Rod particles = about 512 bright stars per player.
+    # Density adapts down automatically when many players are in Limbo.
+    floor-particles-per-refresh: 64
+    # Star particle budget interval in visual frames (normally 20 frames/second).
+    # Real-time pacing prevents /tick sprint from multiplying particle traffic.
+    floor-particle-refresh-ticks: 5
+    # Additional global field: 10,000 slowly drifting End Rod anchors across the
+    # whole Limbo loop. Only anchors due this visual frame in nearby sectors are computed; per-player quality
+    # controls the emission rate. Global stars use normal visibility distance.
+
+  # Individual Limbo ambience; no chat messages are sent.
+  ambient-sounds:
+    enabled: true
+    # Replay the 148.085-second recording immediately and without a gap.
+    pangea-duration-seconds: 148
+    cave-chance: 0.08
+    pangea-volume: 1.0
+    cave-volume: 0.32
+
+  # The void eventually rejects a soul and returns it to the living world.
+  rejection:
+    enabled: true
+    # Enable the synchronized full revival scene when SMP-Revive exposes its bridge API.
+    full-revival: true
+    after-seconds: 600
+    animation-ticks: 80
+
+# Meneleet aggression settings
+meneleet:
+  # Name tag that triggers the aggression (case-insensitive)
+  trigger-name: "Meneleet"
+
+  # Should Meneleet mobs attack other hostile mobs too?
+  attack-hostile-mobs: true
+
+  # Should Meneleet mobs attack passive mobs?
+  attack-passive-mobs: true
+
+  # Should Meneleet mobs attack players?
+  attack-players: true
+
+  # Aggro range (blocks)
+  # Values above 128 are capped
+  aggro-range: 32
+
+# Spaydis pacifist settings
+spaydis:
+  # Name tag that makes a mob peaceful (case-insensitive)
+  trigger-name: "Spaydis"
+  # Bosses are always allowed targets
+
+# Netherite allergy settings
+netherite-allergy:
+  # Cumulative seconds of netherite armor wearing before allergy develops
+  wear-time-to-develop-seconds: 120
+
+  # Seconds between sneezes while wearing netherite with allergy (stage 1)
+  sneeze-interval-seconds: 12
+
+  # Dizziness (nausea) duration after each sneeze at stage 1, seconds
+  dizziness-duration-seconds: 4
+
+  # Stage 2 — any netherite in the inventory triggers it; drops ALL netherite items
+  stage2:
+    # Seconds of cumulative netherite wearing after allergy developed to reach stage 2
+    threshold-seconds: 240
+
+    # Seconds between sneezes at stage 2 (much more frequent)
+    sneeze-interval-seconds: 4
+
+    # Knockback strength at stage 2 (blocks backward)
+    knockback-blocks: 5.0
+
+    # Dizziness (nausea) duration at stage 2, seconds
+    dizziness-duration-seconds: 6
+
+# General settings
+general:
+  # Interval between color cycling updates (in ticks, 20 ticks = 1 second)
+  # Lower = faster cycling, but more server load
+  cycle-interval-ticks: 5
+
+  # Maximum distance (in blocks) from players to update cycling entities
+  # Entities farther than this won't receive color updates (saves network/CPU)
+  # Values above 256 are capped
+  view-distance-blocks: 64
+
+# Zombie Pickaxe settings
+zombie-pickaxe:
+  # Chance (0.0 - 1.0) for zombie below max-y to spawn with pickaxe
+  chance: 0.15
+
+  # Maximum Y level for pickaxe zombies to spawn
+  max-y: 50
+
+  # Pickaxe type weights (higher = more common)
+  # These are relative weights, not percentages
+  pickaxe-weights:
+    WOODEN_PICKAXE: 0
+    STONE_PICKAXE: 30
+    IRON_PICKAXE: 50
+    GOLDEN_PICKAXE: 5
+    DIAMOND_PICKAXE: 2
+    NETHERITE_PICKAXE: 0
+
+# Warden Death Message settings
+warden-death:
+  # Enable/disable this feature with features.warden-death-messages
+
+  # Message keys (defined in language files)
+  messages:
+    - "warden-too-deep"
+    - "warden-too-noisy"
+    - "warden-library"
+
+# Breeding prevention settings
+breeding-prevention:
+  # Enable/disable this feature with features.prevent-breeding-named
+
+  # Name tag that prevents breeding (case-insensitive)
+  # Mobs with this exact name tag will not breed
+  prevent-name: "Rereler"
+
+# Broken Nametag settings
+broken-nametag:
+  # Enable/disable this feature with features.broken-nametag
+
+  # Include death cause in nametag lore
+  include-death-cause: true
+
+# Language settings
+language:
+  # Fallback language code (used when player's locale not supported)
+  fallback: "en"
+
+  # Supported language codes (must have corresponding lang/<code>.yml)
+  supported: ["en", "ru", "de"]
+
+# Debug settings
+debug:
+  # Log cycling entity registration/removal
+  log-cycling-events: false
+
+# Undead curse settings
+undead-curse:
+  # Seconds in direct sunlight between 1 durability point lost by the worn helmet
+  helmet-damage-interval-seconds: 4
+
+# Schizophrenia mode settings (random delay between events, in seconds)
+schizophrenia:
+  sound-min-seconds: 25
+  sound-max-seconds: 90
+  phantom-min-seconds: 90
+  phantom-max-seconds: 240
+  block-min-seconds: 45
+  block-max-seconds: 150
+  # Zero-damage fake hit (screen shake + hurt sound only), roughly every 10 minutes
+  hurt-min-seconds: 420
+  hurt-max-seconds: 780
