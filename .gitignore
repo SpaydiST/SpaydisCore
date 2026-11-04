@@ -20,3 +20,6 @@ docs/superpowers/
 # OS
 Thumbs.db
 .DS_Store
+
+# Tool state
+.omc/

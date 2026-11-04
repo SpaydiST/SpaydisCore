@@ -68,6 +68,7 @@ import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -224,6 +225,7 @@ public final class LimboManager implements Listener {
     private final Map<UUID, RejectionScene> rejectionScenes = new HashMap<>();
     private final Map<UUID, Long> rejectionRetryAt = new HashMap<>();
     private final java.util.Set<UUID> activePlayers = ConcurrentHashMap.newKeySet();
+    private volatile LimboRoster roster;
     private final java.util.Set<UUID> releaseBypasses = ConcurrentHashMap.newKeySet();
     private final Set<UUID> rejectionInProgress = ConcurrentHashMap.newKeySet();
     private final Set<UUID> pendingRevivalCleanup = ConcurrentHashMap.newKeySet();
@@ -838,7 +840,7 @@ public final class LimboManager implements Listener {
         Player player = event.getPlayer();
         if (isLimboWorld(player.getWorld())) {
             captureState(player);
-            activePlayers.add(player.getUniqueId());
+            trackActive(player);
             addVoiceEchoParticipant(player.getUniqueId());
             rebuildLimboScoreboard();
             scheduleLimboScoreboardResync();
@@ -1143,7 +1145,7 @@ public final class LimboManager implements Listener {
         }
         Player player = event.getEntity();
         captureState(player, snapshot);
-        activePlayers.add(player.getUniqueId());
+        trackActive(player);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -1168,7 +1170,7 @@ public final class LimboManager implements Listener {
         }
         storeReturnLocation(player, event.getRespawnLocation());
         captureState(player);
-        activePlayers.add(player.getUniqueId());
+        trackActive(player);
         Location spawn = getSpawn();
         if (spawn == null) {
             return;
@@ -1187,6 +1189,20 @@ public final class LimboManager implements Listener {
             return;
         }
         Player player = event.getPlayer();
+        if (roster().takeQueuedRelease(player.getUniqueId())) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline()) return;
+                ReleaseResult result = release(player);
+                if (result == ReleaseResult.NOT_IN_LIMBO) {
+                    roster().remove(player.getUniqueId());
+                } else if (result != ReleaseResult.RELEASED) {
+                    roster().queueRelease(player.getUniqueId());
+                    plugin.getLogger().warning("Queued Limbo release for " + player.getName()
+                            + " failed (" + result + "); it stays queued.");
+                }
+            });
+            return;
+        }
         if (!isLimboWorld(player.getWorld()) && !hasActiveMarker(player)) {
             return;
         }
@@ -1201,13 +1217,13 @@ public final class LimboManager implements Listener {
                 if (isSpectating(player)) {
                     // Admin spectators stay marked as Limbo occupants but are not pulled back.
                     captureState(player);
-                    activePlayers.add(player.getUniqueId());
+                    trackActive(player);
                     return;
                 }
                 player.teleport(getSpawn());
             }
             captureState(player);
-            activePlayers.add(player.getUniqueId());
+            trackActive(player);
             if (isLimboWorld(player.getWorld())) {
                 rebuildLimboScoreboard();
                 scheduleLimboScoreboardResync();
@@ -3393,7 +3409,7 @@ public final class LimboManager implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (isLimboWorld(player.getWorld()) || hasActiveMarker(player)) {
                 captureState(player);
-                activePlayers.add(player.getUniqueId());
+                trackActive(player);
                 if (isLimboWorld(player.getWorld())) {
                     applyState(player, false);
                 }
@@ -3464,7 +3480,7 @@ public final class LimboManager implements Listener {
         }
         captureState(player);
         player.getPersistentDataContainer().remove(spectatorKey);
-        activePlayers.add(player.getUniqueId());
+        trackActive(player);
         addVoiceEchoParticipant(player.getUniqueId());
         if (player.getGameMode() != GameMode.ADVENTURE) player.setGameMode(GameMode.ADVENTURE);
         if (player.hasGravity()) player.setGravity(false);
@@ -3622,7 +3638,7 @@ public final class LimboManager implements Listener {
         storeReturnLocation(player, player.getLocation());
         captureState(player);
         player.getPersistentDataContainer().set(forcedKey, PersistentDataType.BYTE, (byte) 1);
-        activePlayers.add(player.getUniqueId());
+        trackActive(player);
         if (!player.teleport(spawn)) {
             clearState(player);
             return EnterResult.TELEPORT_FAILED;
@@ -3708,6 +3724,71 @@ public final class LimboManager implements Listener {
         player.setGravity(true);
         player.setGameMode(GameMode.SPECTATOR);
         return SpectateResult.SPECTATING;
+    }
+
+    LimboRoster roster() {
+        LimboRoster current = roster;
+        if (current == null) {
+            synchronized (this) {
+                current = roster;
+                if (current == null) {
+                    java.io.File folder = null;
+                    try {
+                        folder = plugin.getDataFolder();
+                    } catch (RuntimeException ignored) {
+                        // No data folder (unit tests): the roster then lives in memory only.
+                    }
+                    roster = current = new LimboRoster(folder, plugin.getLogger());
+                }
+            }
+        }
+        return current;
+    }
+
+    private void trackActive(Player player) {
+        activePlayers.add(player.getUniqueId());
+        roster().add(player.getUniqueId(), player.getName());
+    }
+
+    /** Every player in Limbo (online or not): name, whether they are online, queued release. */
+    public List<RosterEntry> listLimboPlayers() {
+        LimboRoster current = roster();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (isLimbo(player)) current.add(player.getUniqueId(), player.getName());
+        }
+        List<RosterEntry> entries = new ArrayList<>();
+        for (Map.Entry<UUID, String> entry : current.snapshot().entrySet()) {
+            Player online = Bukkit.getPlayer(entry.getKey());
+            entries.add(new RosterEntry(entry.getKey(), entry.getValue(), online != null,
+                    current.isQueued(entry.getKey())));
+        }
+        entries.sort(Comparator.comparing((RosterEntry entry) -> !entry.online())
+                .thenComparing(entry -> entry.name().toLowerCase(Locale.ROOT)));
+        return entries;
+    }
+
+    public record RosterEntry(UUID uuid, String name, boolean online, boolean queued) {}
+
+    public List<String> rosterNamesStartingWith(String prefix) {
+        return roster().namesStartingWith(prefix);
+    }
+
+    public enum OfflineReleaseResult { QUEUED, ALREADY_QUEUED, UNKNOWN }
+
+    /** Queues a release that is carried out the moment an offline player logs in. */
+    public OfflineReleaseResult queueOfflineRelease(String name) {
+        LimboRoster current = roster();
+        UUID uuid = current.findByName(name);
+        if (uuid == null) return OfflineReleaseResult.UNKNOWN;
+        if (current.isQueued(uuid)) return OfflineReleaseResult.ALREADY_QUEUED;
+        current.queueRelease(uuid);
+        return OfflineReleaseResult.QUEUED;
+    }
+
+    public String rosterName(String name) {
+        LimboRoster current = roster();
+        UUID uuid = current.findByName(name);
+        return uuid == null ? name : current.nameOf(uuid);
     }
 
     public ReleaseResult release(Player player) {
@@ -3821,6 +3902,7 @@ public final class LimboManager implements Listener {
         data.remove(spectatorKey);
         stateSnapshots.remove(uuid);
         activePlayers.remove(uuid);
+        roster().remove(uuid);
         removeVoiceEchoParticipant(uuid);
         removeVoiceCaptureParticipant(uuid);
         if (returning) returnTrails.putIfAbsent(uuid,

@@ -17,6 +17,8 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -343,6 +345,9 @@ public final class PluginCommandModule {
         if (action.equals("spectate")) {
             return handleLimboSpectateCommand(sender, args);
         }
+        if (action.equals("list")) {
+            return handleLimboListCommand(sender);
+        }
         if (!action.equals("leave")) {
             sender.sendMessage(LEGACY.deserialize(messages.get(sender, "limbo-usage")));
             return true;
@@ -354,8 +359,17 @@ public final class PluginCommandModule {
 
         Player target = Bukkit.getPlayerExact(args[2]);
         if (target == null) {
-            sender.sendMessage(LEGACY.deserialize(messages.format(sender,
-                    "limbo-player-not-found", "{player}", args[2])));
+            // Offline: the release is queued and carried out when they next log in.
+            LimboManager.OfflineReleaseResult queued = limboManager.queueOfflineRelease(args[2]);
+            String shown = limboManager.rosterName(args[2]);
+            switch (queued) {
+                case QUEUED -> sender.sendMessage(LEGACY.deserialize(messages.format(sender,
+                        "limbo-release-queued", "{player}", shown)));
+                case ALREADY_QUEUED -> sender.sendMessage(LEGACY.deserialize(messages.format(sender,
+                        "limbo-release-already-queued", "{player}", shown)));
+                case UNKNOWN -> sender.sendMessage(LEGACY.deserialize(messages.format(sender,
+                        "limbo-player-not-found", "{player}", args[2])));
+            }
             return true;
         }
 
@@ -369,6 +383,31 @@ public final class PluginCommandModule {
                     "limbo-return-world-missing", "{world}", limboManager.getReturnWorldName())));
             case TELEPORT_FAILED -> sender.sendMessage(LEGACY.deserialize(messages.format(sender,
                     "limbo-release-failed", "{player}", target.getName())));
+        }
+        return true;
+    }
+
+    /** Everybody in Limbo: online names green, offline gray; a click releases the player. */
+    private boolean handleLimboListCommand(CommandSender sender) {
+        List<LimboManager.RosterEntry> entries = limboManager.listLimboPlayers();
+        if (entries.isEmpty()) {
+            sender.sendMessage(LEGACY.deserialize(messages.get(sender, "limbo-list-empty")));
+            return true;
+        }
+        sender.sendMessage(LEGACY.deserialize(messages.format(sender, "limbo-list-header",
+                "{count}", String.valueOf(entries.size()))));
+        for (LimboManager.RosterEntry entry : entries) {
+            Component line = Component.text(" - ")
+                    .color(NamedTextColor.DARK_GRAY)
+                    .append(Component.text(entry.name())
+                            .color(entry.online() ? NamedTextColor.GREEN : NamedTextColor.GRAY)
+                            .hoverEvent(HoverEvent.showText(LEGACY.deserialize(messages.format(sender,
+                                    "limbo-list-hover", "{player}", entry.name()))))
+                            .clickEvent(ClickEvent.runCommand("/spaydiscore limbo leave " + entry.name())));
+            if (entry.queued()) {
+                line = line.append(LEGACY.deserialize(messages.get(sender, "limbo-list-queued")));
+            }
+            sender.sendMessage(line);
         }
         return true;
     }
@@ -977,7 +1016,7 @@ public final class PluginCommandModule {
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("limbo")) {
                 String prefix = args[1].toLowerCase(Locale.ROOT);
-                return Arrays.asList("status", "leave", "skip", "stars", "phrases", "enter", "spectate")
+                return Arrays.asList("status", "list", "leave", "skip", "stars", "phrases", "enter", "spectate")
                         .stream().filter(s -> s.startsWith(prefix)).collect(Collectors.toList());
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("debug")) {
@@ -1062,6 +1101,9 @@ public final class PluginCommandModule {
             if (args.length == 3 && args[0].equalsIgnoreCase("limbo")
                     && args[1].equalsIgnoreCase("leave")) {
                 String prefix = args[2].toLowerCase(Locale.ROOT);
+                if (limboManager != null) {
+                    return limboManager.rosterNamesStartingWith(prefix);
+                }
                 return Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName)
                         .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix))
