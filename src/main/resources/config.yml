@@ -68,9 +68,6 @@ limbo:
   # Apply the strong Simple Voice Chat echo when voicechat is installed
   voice-echo: true
 
-  # Players SMPRevive has no record of (never seen by it, even if they joined the server
-  # before) are treated like first-time joiners and sent to Limbo. Admins are skipped.
-  send-unknown-players: true
   # Captured normal-world phrases are kept as Ogg Opus files in the plugin data folder
   # under phrases/ and rotated after 30 files.
   # Playback profile: normal or barrel. Underwater remains a legacy alias.

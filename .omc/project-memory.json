@@ -145,8 +145,14 @@
   "hotPaths": [
     {
       "path": "src/main/java/macronux/spaydiscore/features/limbo/LimboManager.java",
-      "accessCount": 6,
-      "lastAccessed": 1793693330993,
+      "accessCount": 7,
+      "lastAccessed": 1793771303827,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/macronux/spaydiscore/features/limbo/SMPReviveBridge.java",
+      "accessCount": 2,
+      "lastAccessed": 1793771303660,
       "type": "file"
     },
     {
@@ -156,10 +162,10 @@
       "type": "directory"
     },
     {
-      "path": "src/main/java/macronux/spaydiscore/features/limbo/SMPReviveBridge.java",
+      "path": "",
       "accessCount": 1,
-      "lastAccessed": 1793693271487,
-      "type": "file"
+      "lastAccessed": 1793771299043,
+      "type": "directory"
     }
   ],
   "userDirectives": []

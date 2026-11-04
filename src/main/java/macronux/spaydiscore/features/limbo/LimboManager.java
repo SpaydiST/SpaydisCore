@@ -246,7 +246,6 @@ public final class LimboManager implements Listener {
     private BukkitTask particleTask;
     private volatile boolean enabled = true;
     private volatile boolean voiceEchoEnabled = true;
-    private boolean sendUnknownPlayers = true;
     private boolean aloneTeleportEnabled = true;
     private long aloneAfterTicks = DEFAULT_ALONE_AFTER_TICKS;
     private double aloneRadius = DEFAULT_ALONE_RADIUS;
@@ -333,7 +332,6 @@ public final class LimboManager implements Listener {
                 plugin.getConfig().getString("limbo.return-world", DEFAULT_RETURN_WORLD_NAME),
                 DEFAULT_RETURN_WORLD_NAME);
         voiceEchoEnabled = plugin.getConfig().getBoolean("limbo.voice-echo", true);
-        sendUnknownPlayers = plugin.getConfig().getBoolean("limbo.send-unknown-players", true);
 
         returnWorldName = configuredReturnWorld;
         enabled = configuredEnabled;
@@ -1181,25 +1179,6 @@ public final class LimboManager implements Listener {
                 applyState(player, true);
             }
         });
-    }
-
-    /**
-     * Runs before SMPRevive's HIGHEST join handler (which creates its record): players it has never
-     * seen are flagged as newcomers, so SMPRevive itself places them in Limbo like first-time joiners.
-     */
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onUnknownPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        if (!enabled || !sendUnknownPlayers || limboWorld == null || !smpReviveBridge.isInstalled()
-                || !player.hasPlayedBefore() || player.hasPermission("spaydiscore.admin")
-                || isLimbo(player) || smpReviveBridge.knowsPlayer(player)) {
-            return;
-        }
-        NamespacedKey newbieKey = new NamespacedKey("smprevive", "newbie_waiting");
-        if (!player.getPersistentDataContainer().has(newbieKey, PersistentDataType.BYTE)) {
-            player.getPersistentDataContainer().set(newbieKey, PersistentDataType.BYTE, (byte) 1);
-            plugin.getLogger().info(player.getName() + " is unknown to SMPRevive; sending them to Limbo as a newcomer.");
-        }
     }
 
     @EventHandler
@@ -3756,6 +3735,7 @@ public final class LimboManager implements Listener {
             releaseBypasses.remove(uuid);
         }
         clearState(player);
+        smpReviveBridge.openCasinoIfNeeded(player);
         return ReleaseResult.RELEASED;
     }
 

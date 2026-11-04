@@ -117,22 +117,18 @@ final class SMPReviveBridge {
         }
     }
 
-    /**
-     * True when SMPRevive already has a record for the player. Unknown or failed lookups
-     * report true so a broken bridge never sends anybody to Limbo by mistake.
-     */
-    boolean knowsPlayer(Player player) {
+    /** Asks SMPRevive to open its casino for a released player who has no revival item yet. */
+    void openCasinoIfNeeded(Player player) {
         Plugin revive = resolveEnabledPlugin();
         if (revive == null || player == null) {
-            return true;
+            return;
         }
         try {
-            Object known = revive.getClass().getMethod("hasPlayerData", UUID.class)
-                    .invoke(revive, player.getUniqueId());
-            return !(known instanceof Boolean) || (Boolean) known;
+            revive.getClass().getMethod("openCasinoIfNeeded", Player.class).invoke(revive, player);
+        } catch (NoSuchMethodException ignored) {
+            // Older SMPRevive builds have no release hook.
         } catch (ReflectiveOperationException | RuntimeException | LinkageError exception) {
             warnOnce(exception);
-            return true;
         }
     }
 
